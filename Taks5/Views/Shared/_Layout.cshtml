@@ -29,6 +29,8 @@
                     <div class="d-flex align-items-center">
                         @{
                             var userName = Context.Session.GetString("UserName");
+                            var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+                            var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
                         }
 
                         @if (!string.IsNullOrEmpty(userName))
@@ -36,10 +38,11 @@
                             <span class="me-2">Welcome, <strong>@userName</strong></span>
                             <a class="btn btn-outline-danger btn-sm" asp-controller="Account" asp-action="Logout">Logout</a>
                         }
-                        else
+                        else if (!(currentController == "Account" && currentAction == "Login"))
                         {
                             <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">Login</a>
                         }
+
                     </div>
                 </div>
             </div>

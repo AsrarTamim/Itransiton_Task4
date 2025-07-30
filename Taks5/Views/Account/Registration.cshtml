@@ -5,6 +5,10 @@
 }
 
 <h1>Registration</h1>
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
 
 <h4>RegistrationViewModel</h4>
 <hr />

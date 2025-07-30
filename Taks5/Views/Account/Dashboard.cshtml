@@ -2,9 +2,25 @@
 
 <h2>User Management Dashboard</h2>
 
+<!-- Alert Messages -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <form asp-action="Tools" method="post">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <!-- Toolbar -->
+        <!-- Tools -->
         <div class="d-flex gap-2">
             <button type="submit" name="action" value="block" class="btn btn-warning">Block</button>
             <button type="submit" name="action" value="unblock" class="btn btn-success">
@@ -18,10 +34,11 @@
         <!-- Search -->
         <div class="d-flex">
             <input type="text" name="search" value="@Context.Request.Query["search"]" class="form-control me-2" placeholder="Search by name or email" />
-            <button type="submit" class="btn btn-outline-primary">Search</button>
+            <button formaction="@Url.Action("Dashboard")" formmethod="get" class="btn btn-outline-primary">Search</button>
         </div>
     </div>
 
+    <!-- User Table -->
     <table class="table table-bordered table-striped">
         <thead>
             <tr>
@@ -47,10 +64,39 @@
     </table>
 </form>
 
+<!-- Pagination -->
+<nav aria-label="User list pagination">
+    <ul class="pagination justify-content-center">
+        <li class="page-item @(ViewBag.CurrentPage <= 1 ? "disabled" : "")">
+            <a class="page-link"
+               asp-action="Dashboard"
+               asp-route-page="@(ViewBag.CurrentPage - 1)"
+               asp-route-search="@ViewBag.Search">Previous</a>
+        </li>
+
+        @for (int i = 1; i <= ViewBag.TotalPages; i++)
+        {
+            <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                <a class="page-link"
+                   asp-action="Dashboard"
+                   asp-route-page="@i"
+                   asp-route-search="@ViewBag.Search">@i</a>
+            </li>
+        }
+
+        <li class="page-item @(ViewBag.CurrentPage >= ViewBag.TotalPages ? "disabled" : "")">
+            <a class="page-link"
+               asp-action="Dashboard"
+               asp-route-page="@(ViewBag.CurrentPage + 1)"
+               asp-route-search="@ViewBag.Search">Next</a>
+        </li>
+    </ul>
+</nav>
+
 @section Scripts {
     <script>
         document.getElementById("selectAll").addEventListener("change", function () {
-            var checkboxes = document.querySelectorAll('input[name="selectedEmails"]');
+            const checkboxes = document.querySelectorAll('input[name="selectedEmails"]');
             checkboxes.forEach(c => c.checked = this.checked);
         });
     </script>

@@ -69,13 +69,22 @@ namespace Taks5.Controllers
 
             return View(model);
         }
-        public IActionResult Dashboard(string search)
+        public IActionResult Dashboard(string search, int page = 1, int pageSize = 5)
         {
             if (!IsUserLoggedIn())
             {
                 return RedirectToAction("Login");
             }
             var users = _userService.GetAllUsers();
+            var userEmail = HttpContext.Session.GetString("UserEmail");
+            var user = _userService.GetUserByEmail(userEmail);
+
+            if (user == null || user.IsBlocked)
+            {
+                HttpContext.Session.Clear();
+                TempData["Error"] = "You have been blocked.";
+                return RedirectToAction("Login");
+            }
             if (!string.IsNullOrWhiteSpace(search))
             {
                 search = search.ToLower();
@@ -84,6 +93,17 @@ namespace Taks5.Controllers
                     (!string.IsNullOrEmpty(u.Email) && u.Email.ToLower().Contains(search))
                 ).ToList();
             }
+            var totalItems = users.Count;
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            var Allusers = users
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.Search = search;
 
             return View(users);
         }
@@ -101,31 +121,51 @@ namespace Taks5.Controllers
                 return RedirectToAction("Dashboard");
             }
 
+            string currentUserEmail = HttpContext.Session.GetString("UserEmail");
+            bool currentUserAffected = false;
+
             foreach (var email in selectedEmails)
             {
                 var user = _userService.GetUserByEmail(email);
                 if (user == null) continue;
 
-                switch (action.ToLower())
-                {
-                    case "block":
-                        user.IsBlocked = true;
-                        _userService.UpdateUser(user);
-                        break;
-                    case "unblock":
-                        user.IsBlocked = false;
-                        _userService.UpdateUser(user);
-                        break;
-                    case "delete":
-                        _userService.DeleteUser(user.Email);
-                        break;
-                }
+                if (email == currentUserEmail) currentUserAffected = true;
 
+                if (action.ToLower() == "block")
+                {
+                    user.IsBlocked = true;
+                    _userService.UpdateUser(user);
+                }
+                else if (action.ToLower() == "unblock")
+                {
+                    user.IsBlocked = false;
+                    _userService.UpdateUser(user);
+                }
+                else if (action.ToLower() == "delete")
+                {
+                    _userService.DeleteUser(email);
+                }
+            }
+
+            if (currentUserAffected && action.ToLower() == "block")
+            {
+                HttpContext.Session.Clear();
+                TempData["Error"] = "You have been blocked.";
+                return RedirectToAction("Login");
+            }
+
+            if (currentUserAffected && action.ToLower() == "delete")
+            {
+                HttpContext.Session.Clear();
+                TempData["Error"] = "Your account has been deleted.";
+                return RedirectToAction("Login");
             }
 
             TempData["Success"] = $"Action '{action}' completed successfully.";
             return RedirectToAction("Dashboard");
         }
+
+
 
 
 
