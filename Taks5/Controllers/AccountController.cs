@@ -79,10 +79,10 @@ namespace Taks5.Controllers
             var userEmail = HttpContext.Session.GetString("UserEmail");
             var user = _userService.GetUserByEmail(userEmail);
 
-            if (user == null || user.IsBlocked)
+            if (user == null )
             {
                 HttpContext.Session.Clear();
-                TempData["Error"] = "You have been blocked.";
+                TempData["Error"] = "You have been deleted.";
                 return RedirectToAction("Login");
             }
             if (!string.IsNullOrWhiteSpace(search))
@@ -105,7 +105,7 @@ namespace Taks5.Controllers
             ViewBag.TotalPages = totalPages;
             ViewBag.Search = search;
 
-            return View(users);
+            return View(Allusers);
         }
         public IActionResult Logout()
         {
@@ -122,14 +122,14 @@ namespace Taks5.Controllers
             }
 
             string currentUserEmail = HttpContext.Session.GetString("UserEmail");
-            bool currentUserAffected = false;
+            bool currentUser = false;
 
             foreach (var email in selectedEmails)
             {
                 var user = _userService.GetUserByEmail(email);
                 if (user == null) continue;
 
-                if (email == currentUserEmail) currentUserAffected = true;
+                if (email == currentUserEmail) currentUser = true;
 
                 if (action.ToLower() == "block")
                 {
@@ -147,14 +147,7 @@ namespace Taks5.Controllers
                 }
             }
 
-            if (currentUserAffected && action.ToLower() == "block")
-            {
-                HttpContext.Session.Clear();
-                TempData["Error"] = "You have been blocked.";
-                return RedirectToAction("Login");
-            }
-
-            if (currentUserAffected && action.ToLower() == "delete")
+            if (currentUser && action.ToLower() == "delete")
             {
                 HttpContext.Session.Clear();
                 TempData["Error"] = "Your account has been deleted.";
