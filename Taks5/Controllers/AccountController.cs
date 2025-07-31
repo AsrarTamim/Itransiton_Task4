@@ -115,13 +115,29 @@ namespace Taks5.Controllers
         [HttpPost]
         public IActionResult Tools(string action, List<string> selectedEmails)
         {
+            string currentUserEmail = HttpContext.Session.GetString("UserEmail");
+            var current_user = _userService.GetUserByEmail(currentUserEmail);
+
+            if (current_user == null)
+            {
+                HttpContext.Session.Clear();
+                TempData["Error"] = "Your account has been deleted.";
+                return RedirectToAction("Login");
+            }
+
+            if (current_user.IsBlocked)
+            {
+                HttpContext.Session.Clear();
+                TempData["Error"] = "You are blocked and cannot perform this action.";
+                return RedirectToAction("Login");
+            }
+
             if (selectedEmails == null || !selectedEmails.Any())
             {
                 TempData["Error"] = "No users selected.";
                 return RedirectToAction("Dashboard");
             }
 
-            string currentUserEmail = HttpContext.Session.GetString("UserEmail");
             bool currentUser = false;
 
             foreach (var email in selectedEmails)
@@ -157,11 +173,6 @@ namespace Taks5.Controllers
             TempData["Success"] = $"Action '{action}' completed successfully.";
             return RedirectToAction("Dashboard");
         }
-
-
-
-
-
 
     }
 }
